@@ -7,22 +7,22 @@ import { useMessageHandler } from 'hooks/UseMessageHandler';
 
 export default function HomePage () {
 
-  const [testData, setTestData] = useState('');
+  const [testData, setTestData] = useState(''); 
   const [numberInputValue, setNumberInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Используется для анимации спиннера и панели с результатом
 
-  const [messageData, showMessage] = useMessageHandler(1500);
-  const [shallMoveInputLabelsData, setShallMoveInputLabelsData] = useState({
+  const [messageData, showMessage] = useMessageHandler(1500); // Используется для отображения сообщения
+  const [shallMoveInputLabelsData, setShallMoveInputLabelsData] = useState({ // Используется для анимации надписей над / в input
     email: false,
     number: false
   });
 
   
-  const updateNumberInput = (event) => {
+  const updateNumberInput = (event) => { 
     setNumberInputValue(event.target.value)
   }
 
-  const updateInputLabel = (event) => {
+  const updateInputLabel = (event) => { // Используется для анимации надписей над / в input
     if((!event.target.value) && (event.type === 'blur')) {
       setShallMoveInputLabelsData({ ...shallMoveInputLabelsData, [event.target.name]: false })
     } else {
@@ -30,11 +30,12 @@ export default function HomePage () {
     }
   };
   
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event) => { 
     event.preventDefault();
 
     const body = { email: event.target.elements.email.value, number: event.target.elements.number.value.replace(/-/g, '') }
 
+    // Проверка почты и номера 
     if (!body.email.match(
     /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
     ) ||
@@ -42,7 +43,7 @@ export default function HomePage () {
       showMessage('Please enter correct data');
     } else {
       setIsLoading(true);
-      setTimeout(() => {setTestData('')}, 500)
+      setTimeout(() => {setTestData('')}, 500) // Ожидание завершение анимации
 
       await axios.post(process.env.REACT_APP_SERVER_URL + '/test/get', body)
       .then(res => {
@@ -51,8 +52,13 @@ export default function HomePage () {
       })
       .catch(err => {
         const code = (err.message.slice(err.message.length - 3, err.message.length))
-        if (code === '404') {
+        if (code === '404') { /* Завершаем анимации если код 404. 
+        Если же код отличный от 404 (498 в данном случае), анимация не завершается, так как 
+        498 возвращается если сервер отменил запрос, в связи с приходом повторного */
           showMessage('Not found');
+          setIsLoading(false);
+        } else if (code != '498') {
+          showMessage('Something went wrong');
           setIsLoading(false);
         }
       }); 
@@ -60,7 +66,7 @@ export default function HomePage () {
   };
 
   return(
-    <Box className='w-screen h-screen grid
+    <Box className='w-screen h-screen flex flex-col pt-[30vh]
     bg-gray-900'>
       <form className='w-full max-w-[480px] -mt-6 px-4 py-4 
       grid place-self-center'
@@ -93,6 +99,7 @@ export default function HomePage () {
         bg-sky-300/10 hover:bg-sky-300/20 border-0'>
           <p className='place-self-center font-semibold'>Submit</p>
         </button >
+      </form>    
 
         <p className={`mt-4 place-self-center transition-all duration-300 text-rose-500
         ${messageData.isShowing ? 'opacity-100': 'opacity-0'}`}>
@@ -112,7 +119,7 @@ export default function HomePage () {
           ${isLoading ? 'opacity-100' : 'opacity-0'}`}/>
         </Box>
             
-      </form>     
+ 
     </Box>    
   )
 }
