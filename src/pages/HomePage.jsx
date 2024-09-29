@@ -91,7 +91,7 @@ export default function HomePage () {
         
         <button className='w-full h-12 mt-12 grid text-neutral-200
         bg-sky-300/10 hover:bg-sky-300/20 border-0'>
-          <p className='place-self-center font-semibold'>Verify</p>
+          <p className='place-self-center font-semibold'>Submit</p>
         </button >
 
         <p className={`mt-4 place-self-center transition-all duration-300 text-rose-500
