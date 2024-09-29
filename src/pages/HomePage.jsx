@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import axios from 'axios';
 import InputMask from 'react-input-mask';
@@ -41,32 +41,44 @@ export default function HomePage () {
     ) ||
     (!(parseInt(body.number) + '' === body.number))) {
       showMessage('Please enter correct data');
+      setIsLoading(false);
     } else {
       setIsLoading(true);
       setTimeout(() => {setTestData('')}, 500) // Ожидание завершение анимации
 
       await axios.post(process.env.REACT_APP_SERVER_URL + '/test/get', body)
       .then(res => {
-        setTestData(res.data);
-        setIsLoading(false);
+        setTestData(res.data);   
       })
       .catch(err => {
-        const code = (err.message.slice(err.message.length - 3, err.message.length))
-        if (code === '404') { /* Завершаем анимации если код 404. 
+        /* Завершаем анимации если код 404. 
         Если же код отличный от 404 (498 в данном случае), анимация не завершается, так как 
         498 возвращается если сервер отменил запрос, в связи с приходом повторного */
+        const code = (err.message.slice(err.message.length - 3, err.message.length))
+        if (code === '404') { 
           showMessage('Not found');
           setIsLoading(false);
         } else if (code != '498') {
           showMessage('Something went wrong');
           setIsLoading(false);
         }
+        setTestData('');
       }); 
     }    
   };
 
+  useEffect(() => { /* Необходимо для избежания отображения ответа на предыдущий запрос 
+  при попытке нового запроса с некорректными данными ()*/
+    if (!isLoading) {
+      setTestData('');
+    } else if (testData && isLoading) {
+      setIsLoading(false);
+    }
+  }, [testData])
+
+
   return(
-    <Box className='w-screen h-screen flex flex-col pt-[30vh]
+    <Box className='w-screen h-screen flex flex-col place-content-center
     bg-gray-900'>
       <form className='w-full max-w-[480px] -mt-6 px-4 py-4 
       grid place-self-center'
@@ -100,8 +112,11 @@ export default function HomePage () {
           <p className='place-self-center font-semibold'>Submit</p>
         </button >
       </form>    
+      
 
-        <p className={`mt-4 place-self-center transition-all duration-300 text-rose-500
+      <Box className='w-full max-w-[480px] px-4 mx-auto'>
+        <p className={`place-self-center transition-all duration-300 
+        text-rose-500 text-center
         ${messageData.isShowing ? 'opacity-100': 'opacity-0'}`}>
           {messageData.message ?  messageData.message : '_'}
         </p>    
@@ -118,7 +133,7 @@ export default function HomePage () {
           <CircularProgress className={`transition-all duration-500
           ${isLoading ? 'opacity-100' : 'opacity-0'}`}/>
         </Box>
-            
+      </Box>
  
     </Box>    
   )
